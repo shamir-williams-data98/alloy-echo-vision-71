@@ -13,7 +13,7 @@ class AIProcessor {
       'see', 'look', 'what', 'how', 'describe', 'color', 'wearing', 'holding',
       'picture', 'image', 'show', 'visible', 'appearance', 'behind', 'front',
       'left', 'right', 'above', 'below', 'around', 'gesture', 'posture',
-      'expression', 'face', 'hand', 'object', 'room', 'background'
+      'expression', 'face', 'hand', 'object', 'room', 'background', 'doing'
     ];
     
     const lowerText = text.toLowerCase();
@@ -36,7 +36,7 @@ class AIProcessor {
   }
 
   private async processTextOnly(text: string): Promise<string> {
-    const url = `${this.baseUrl}/gemini-pro:generateContent?key=${this.apiKey}`;
+    const url = `${this.baseUrl}/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -72,7 +72,7 @@ class AIProcessor {
   }
 
   private async processWithVision(text: string, imageData: string): Promise<string> {
-    const url = `${this.baseUrl}/gemini-pro-vision:generateContent?key=${this.apiKey}`;
+    const url = `${this.baseUrl}/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
     
     // Convert base64 image to the format Gemini expects
     const base64Data = imageData.split(',')[1];
