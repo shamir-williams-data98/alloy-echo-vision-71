@@ -21,29 +21,38 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
 }) => {
   const [textInput, setTextInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [speechError, setSpeechError] = useState<string>('');
   const recognitionRef = useRef<any>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     // Initialize speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    
+    if (SpeechRecognition) {
+      console.log('Initializing speech recognition');
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'en-US';
+      recognitionRef.current.maxAlternatives = 1;
 
       recognitionRef.current.onstart = () => {
+        console.log('Speech recognition started');
         setIsRecording(true);
+        setSpeechError('');
         onListeningChange(true);
       };
 
       recognitionRef.current.onresult = (event: any) => {
+        console.log('Speech recognition result:', event);
         const transcript = event.results[0][0].transcript;
+        console.log('Transcript:', transcript);
         onUserMessage(transcript);
       };
 
       recognitionRef.current.onend = () => {
+        console.log('Speech recognition ended');
         setIsRecording(false);
         onListeningChange(false);
       };
@@ -52,7 +61,29 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
         console.error('Speech recognition error:', event.error);
         setIsRecording(false);
         onListeningChange(false);
+        
+        let errorMessage = 'Speech recognition error';
+        switch (event.error) {
+          case 'not-allowed':
+            errorMessage = 'Microphone access denied. Please allow microphone permissions.';
+            break;
+          case 'no-speech':
+            errorMessage = 'No speech detected. Please try again.';
+            break;
+          case 'network':
+            errorMessage = 'Network error. Check your connection.';
+            break;
+          case 'service-not-allowed':
+            errorMessage = 'Speech service not allowed.';
+            break;
+          default:
+            errorMessage = `Speech error: ${event.error}`;
+        }
+        setSpeechError(errorMessage);
       };
+    } else {
+      console.log('Speech recognition not supported');
+      setSpeechError('Speech recognition not supported in this browser');
     }
 
     return () => {
@@ -62,20 +93,44 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
     };
   }, [onListeningChange, onUserMessage]);
 
-  const startListening = useCallback(() => {
-    if (recognitionRef.current && !isRecording) {
+  const startListening = useCallback(async () => {
+    if (!recognitionRef.current) {
+      setSpeechError('Speech recognition not available');
+      return;
+    }
+
+    try {
       // Stop any current speech
       if (speechSynthesis.speaking) {
         speechSynthesis.cancel();
         onSpeakingChange(false);
       }
+
+      // Request microphone permissions
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+          console.log('Microphone permission granted');
+        } catch (err) {
+          console.error('Microphone permission denied:', err);
+          setSpeechError('Microphone access denied. Please allow microphone permissions.');
+          return;
+        }
+      }
       
-      recognitionRef.current.start();
+      if (!isRecording) {
+        console.log('Starting speech recognition');
+        recognitionRef.current.start();
+      }
+    } catch (error) {
+      console.error('Error starting speech recognition:', error);
+      setSpeechError('Failed to start speech recognition');
     }
   }, [isRecording, onSpeakingChange]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isRecording) {
+      console.log('Stopping speech recognition');
       recognitionRef.current.stop();
     }
   }, [isRecording]);
@@ -145,6 +200,13 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           </Button>
         )}
       </div>
+
+      {/* Speech Error Display */}
+      {speechError && (
+        <div className="text-xs text-red-400 bg-red-900/20 border border-red-500/30 rounded px-2 py-1">
+          {speechError}
+        </div>
+      )}
 
       {/* Text Input */}
       <div className="flex gap-1 md:gap-2">

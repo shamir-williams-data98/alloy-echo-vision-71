@@ -14,6 +14,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string>('');
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [isLoading, setIsLoading] = useState(false);
 
   useImperativeHandle(ref, () => ({
     captureImage: () => {
@@ -48,39 +49,74 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const startCamera = async () => {
     try {
       setError('');
+      setIsLoading(true);
       
       // Stop existing stream before starting new one
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
-      
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported by this browser');
+      }
+
+      // Request camera permissions
+      const constraints = {
         video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
+          width: { ideal: 640, max: 1280 },
+          height: { ideal: 480, max: 720 },
           facingMode: facingMode
-        }
-      });
+        },
+        audio: false
+      };
+
+      console.log('Requesting camera with constraints:', constraints);
       
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      console.log('Camera stream obtained:', mediaStream);
       setStream(mediaStream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded');
+          setIsLoading(false);
+        };
       }
     } catch (err) {
       console.error('Error accessing camera:', err);
-      setError('Unable to access camera. Please check permissions.');
+      setIsLoading(false);
+      
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          setError('Camera access denied. Please allow camera permissions and refresh.');
+        } else if (err.name === 'NotFoundError') {
+          setError('No camera found. Please connect a camera and try again.');
+        } else if (err.name === 'NotSupportedError') {
+          setError('Camera not supported by this browser.');
+        } else {
+          setError(`Camera error: ${err.message}`);
+        }
+      } else {
+        setError('Unable to access camera. Please check permissions.');
+      }
     }
   };
 
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        console.log('Stopping camera track:', track);
+        track.stop();
+      });
       setStream(null);
     }
   };
 
   const toggleCamera = () => {
+    console.log('Toggling camera from', facingMode, 'to', facingMode === 'user' ? 'environment' : 'user');
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
@@ -101,9 +137,27 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
 
   if (error) {
     return (
-      <div className="w-full h-full bg-red-900/20 border border-red-500 rounded-lg flex items-center justify-center">
-        <div className="text-center text-red-300 p-4">
-          <p className="text-sm">{error}</p>
+      <div className="w-full h-full bg-red-900/20 border border-red-500 rounded-lg flex items-center justify-center p-4">
+        <div className="text-center text-red-300">
+          <p className="text-sm mb-2">{error}</p>
+          <Button 
+            onClick={startCamera} 
+            size="sm" 
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Retry Camera
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
+        <div className="text-center text-gray-400">
+          <div className="w-8 h-8 mx-auto mb-2 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm">Loading camera...</p>
         </div>
       </div>
     );
