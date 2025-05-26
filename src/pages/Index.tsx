@@ -20,7 +20,7 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! I\'m NEXUS AI, your advanced assistant. I can see through your camera and respond with voice. Ask me anything!',
+      text: 'Hello! I\'m NEXUS AI by Sham, your advanced assistant. I can see through your camera and respond with voice. Ask me anything!',
       type: 'assistant',
       timestamp: Date.now()
     }
@@ -76,29 +76,30 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-700"></div>
-        <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
+        <div className="absolute top-0 left-1/4 w-64 h-64 md:w-96 md:h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
+        <div className="absolute top-0 right-1/4 w-64 h-64 md:w-96 md:h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-700"></div>
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 md:w-96 md:h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-6 max-w-7xl">
+      <div className="relative z-10 container mx-auto px-4 py-4 md:py-6 max-w-7xl min-h-screen flex flex-col">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-4">
-            NEXUS AI
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-2 md:mb-4">
+            NEXUS
           </h1>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xs md:text-sm text-gray-400 mb-1">by Sham</p>
+          <p className="text-sm md:text-lg text-gray-300 max-w-2xl mx-auto px-4">
             Advanced AI Assistant with Voice & Vision Capabilities
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+        <div className="flex-1 flex flex-col lg:grid lg:grid-cols-3 gap-4 md:gap-6 min-h-0">
           {/* Webcam Panel */}
-          <div className="lg:col-span-1">
-            <Card className="h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm">
-              <div className="p-4 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-cyan-400">Vision Input</h3>
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <Card className="h-64 md:h-80 lg:h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm">
+              <div className="p-3 md:p-4 h-full flex flex-col">
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 className="text-lg md:text-xl font-semibold text-cyan-400">Vision Input</h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -108,7 +109,7 @@ const Index = () => {
                     {cameraEnabled ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
                   </Button>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-h-0">
                   <WebcamCapture 
                     ref={webcamRef}
                     enabled={cameraEnabled}
@@ -120,17 +121,17 @@ const Index = () => {
           </div>
 
           {/* Chat Panel */}
-          <div className="lg:col-span-2">
-            <Card className="h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm flex flex-col">
-              <div className="p-4 border-b border-gray-700">
-                <h3 className="text-xl font-semibold text-cyan-400">Conversation</h3>
+          <div className="lg:col-span-2 order-1 lg:order-2 flex-1 flex flex-col min-h-0">
+            <Card className="h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm flex flex-col min-h-0">
+              <div className="p-3 md:p-4 border-b border-gray-700 flex-shrink-0">
+                <h3 className="text-lg md:text-xl font-semibold text-cyan-400">Conversation</h3>
               </div>
               
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-hidden min-h-0">
                 <ChatDisplay messages={messages} />
               </div>
 
-              <div className="p-4 border-t border-gray-700">
+              <div className="p-3 md:p-4 border-t border-gray-700 flex-shrink-0">
                 <VoiceControls
                   isListening={isListening}
                   isSpeaking={isSpeaking}
@@ -144,12 +145,12 @@ const Index = () => {
         </div>
 
         {/* Status Indicators */}
-        <div className="fixed bottom-4 right-4 flex flex-col gap-2">
+        <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-20">
           {isListening && (
             <div className="bg-red-500/20 border border-red-500 rounded-lg px-3 py-2 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <Mic className="w-4 h-4 text-red-400 animate-pulse" />
-                <span className="text-sm text-red-300">Listening...</span>
+                <span className="text-xs md:text-sm text-red-300">Listening...</span>
               </div>
             </div>
           )}
@@ -158,7 +159,7 @@ const Index = () => {
             <div className="bg-blue-500/20 border border-blue-500 rounded-lg px-3 py-2 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <Volume2 className="w-4 h-4 text-blue-400 animate-pulse" />
-                <span className="text-sm text-blue-300">Speaking...</span>
+                <span className="text-xs md:text-sm text-blue-300">Speaking...</span>
               </div>
             </div>
           )}

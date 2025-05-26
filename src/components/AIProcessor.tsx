@@ -46,7 +46,7 @@ class AIProcessor {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `You are NEXUS AI, an advanced AI assistant with a futuristic personality. You are helpful, intelligent, and slightly witty. Keep responses concise but engaging. User message: ${text}`
+            text: `You are NEXUS AI by Sham, an advanced AI assistant with a futuristic personality. You are helpful, intelligent, and slightly witty. Keep responses concise but engaging. User message: ${text}`
           }]
         }],
         generationConfig: {
@@ -86,7 +86,7 @@ class AIProcessor {
         contents: [{
           parts: [
             {
-              text: `You are NEXUS AI, an advanced AI assistant with vision capabilities. You can see through the user's camera. Be helpful and observant. Analyze the image and respond to: ${text}`
+              text: `You are NEXUS AI by Sham, an advanced AI assistant with vision capabilities. You can see through the user's camera. Be helpful and observant. Analyze the image and respond to: ${text}`
             },
             {
               inline_data: {
