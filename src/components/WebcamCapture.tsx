@@ -1,5 +1,7 @@
 
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import { Button } from '@/components/ui/button';
+import { SwitchCamera } from 'lucide-react';
 
 interface WebcamCaptureProps {
   enabled: boolean;
@@ -11,6 +13,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string>('');
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   useImperativeHandle(ref, () => ({
     captureImage: () => {
@@ -40,16 +43,22 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
     }
 
     return () => stopCamera();
-  }, [enabled]);
+  }, [enabled, facingMode]);
 
   const startCamera = async () => {
     try {
       setError('');
+      
+      // Stop existing stream before starting new one
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           width: { ideal: 640 },
           height: { ideal: 480 },
-          facingMode: 'user'
+          facingMode: facingMode
         }
       });
       
@@ -69,6 +78,10 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+  };
+
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
   if (!enabled) {
@@ -107,12 +120,31 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       />
       <canvas ref={canvasRef} className="hidden" />
       
+      {/* Camera toggle button */}
+      <div className="absolute top-3 right-3 z-10">
+        <Button
+          onClick={toggleCamera}
+          size="sm"
+          variant="outline"
+          className="bg-black/50 border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/20 backdrop-blur-sm"
+        >
+          <SwitchCamera className="w-4 h-4" />
+        </Button>
+      </div>
+      
       {/* Overlay effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-cyan-400"></div>
         <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-cyan-400"></div>
         <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-cyan-400"></div>
         <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-cyan-400"></div>
+      </div>
+      
+      {/* Camera mode indicator */}
+      <div className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-sm rounded px-2 py-1">
+        <span className="text-xs text-cyan-400">
+          {facingMode === 'user' ? 'Front' : 'Back'} Camera
+        </span>
       </div>
     </div>
   );

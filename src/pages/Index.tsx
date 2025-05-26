@@ -20,7 +20,7 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! I\'m NEXUS AI by Sham, your advanced assistant. I can see through your camera and respond with voice. Ask me anything!',
+      text: 'Hello! I\'m NEXUS AI, your advanced assistant. I can see through your camera and respond with voice. Ask me anything!',
       type: 'assistant',
       timestamp: Date.now()
     }
@@ -87,7 +87,9 @@ const Index = () => {
           <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-2 md:mb-4">
             NEXUS
           </h1>
-          <p className="text-xs md:text-sm text-gray-400 mb-1">by Sham</p>
+          <p className="text-xl md:text-2xl lg:text-3xl font-bold text-cyan-300 mb-2">
+            by <span className="text-2xl md:text-3xl lg:text-4xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">SHAM</span>
+          </p>
           <p className="text-sm md:text-lg text-gray-300 max-w-2xl mx-auto px-4">
             Advanced AI Assistant with Voice & Vision Capabilities
           </p>
