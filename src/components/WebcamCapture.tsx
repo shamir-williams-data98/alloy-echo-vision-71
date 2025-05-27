@@ -18,7 +18,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [videoReady, setVideoReady] = useState(false);
   
-  const { stream, error, isLoading, isReady, startCamera } = useCamera({
+  const { stream, error, isLoading, isReady, startCamera, requestPermission } = useCamera({
     enabled,
     facingMode
   });
@@ -53,12 +53,8 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       video.srcObject = stream;
       setVideoReady(false);
       
-      const handleLoadedMetadata = () => {
-        console.log('Video metadata loaded');
-      };
-
-      const handleCanPlay = () => {
-        console.log('Video can play, attempting to start');
+      const handleCanPlayThrough = () => {
+        console.log('Video can play through, starting playback');
         video.play()
           .then(() => {
             console.log('Video playing successfully');
@@ -79,14 +75,13 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
         setVideoReady(false);
       };
 
-      video.addEventListener('loadedmetadata', handleLoadedMetadata);
-      video.addEventListener('canplay', handleCanPlay);
+      // Use canplaythrough for better reliability
+      video.addEventListener('canplaythrough', handleCanPlayThrough);
       video.addEventListener('playing', handlePlaying);
       video.addEventListener('error', handleError);
       
       return () => {
-        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('canplaythrough', handleCanPlayThrough);
         video.removeEventListener('playing', handlePlaying);
         video.removeEventListener('error', handleError);
         setVideoReady(false);
@@ -104,7 +99,13 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   }
 
   if (error) {
-    return <CameraError error={error} onRetry={startCamera} />;
+    return (
+      <CameraError 
+        error={error} 
+        onRetry={startCamera}
+        onRequestPermission={requestPermission}
+      />
+    );
   }
 
   if (isLoading || !videoReady) {

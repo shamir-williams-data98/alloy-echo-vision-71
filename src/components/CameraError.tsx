@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 interface CameraErrorProps {
   error: string;
   onRetry: () => void;
+  onRequestPermission?: () => void;
 }
 
-const CameraError = ({ error, onRetry }: CameraErrorProps) => {
+const CameraError = ({ error, onRetry, onRequestPermission }: CameraErrorProps) => {
   const isPermissionError = error.toLowerCase().includes('denied') || error.toLowerCase().includes('permission');
   
   return (
@@ -27,13 +28,24 @@ const CameraError = ({ error, onRetry }: CameraErrorProps) => {
           </div>
         )}
         
-        <Button 
-          onClick={onRetry} 
-          size="sm" 
-          className="bg-red-600 hover:bg-red-700"
-        >
-          {isPermissionError ? 'Check Permissions & Retry' : 'Retry Camera'}
-        </Button>
+        <div className="flex flex-col gap-2">
+          {isPermissionError && onRequestPermission && (
+            <Button 
+              onClick={onRequestPermission} 
+              size="sm" 
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Grant Permission
+            </Button>
+          )}
+          <Button 
+            onClick={onRetry} 
+            size="sm" 
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {isPermissionError ? 'Try Again' : 'Retry Camera'}
+          </Button>
+        </div>
       </div>
     </div>
   );
