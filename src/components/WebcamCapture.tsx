@@ -16,6 +16,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useImperativeHandle(ref, () => ({
     captureImage: () => {
@@ -48,7 +49,12 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       stopCamera();
     }
 
-    return () => stopCamera();
+    return () => {
+      stopCamera();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [enabled, facingMode]);
 
   const startCamera = async () => {
@@ -56,6 +62,18 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       setError('');
       setIsLoading(true);
       setIsReady(false);
+      
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Set a timeout to prevent infinite loading
+      timeoutRef.current = setTimeout(() => {
+        console.log('Camera loading timeout');
+        setIsLoading(false);
+        setError('Camera loading timeout. Please try again.');
+      }, 10000); // 10 second timeout
       
       // Stop existing stream
       if (stream) {
@@ -70,11 +88,20 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
 
       console.log('Starting camera with facing mode:', facingMode);
       
-      const constraints = {
+      // Try with basic constraints first
+      const basicConstraints = {
         video: { 
-          width: { ideal: 640, max: 1280 },
-          height: { ideal: 480, max: 720 },
-          facingMode: facingMode
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+        },
+        audio: false
+      };
+
+      // Try with facing mode if supported
+      const constraints = facingMode === 'user' ? basicConstraints : {
+        video: { 
+          ...basicConstraints.video,
+          facingMode: { ideal: facingMode }
         },
         audio: false
       };
@@ -85,36 +112,44 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       setStream(mediaStream);
       
       if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        
-        // Wait for video to be ready
         const video = videoRef.current;
+        video.srcObject = mediaStream;
         
-        const handleLoadedMetadata = () => {
-          console.log('Video metadata loaded, starting playback');
-          video.play().then(() => {
-            console.log('Video playing successfully');
-            setIsLoading(false);
-            setIsReady(true);
-          }).catch(err => {
-            console.error('Error playing video:', err);
-            setError('Failed to start video playback');
-            setIsLoading(false);
-          });
+        // Handle video ready event
+        const handleCanPlay = () => {
+          console.log('Video can play, attempting to start');
+          video.play()
+            .then(() => {
+              console.log('Video playing successfully');
+              if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+              }
+              setIsLoading(false);
+              setIsReady(true);
+            })
+            .catch(err => {
+              console.error('Error playing video:', err);
+              setError('Failed to start video playback');
+              setIsLoading(false);
+            });
         };
 
         const handleError = (err: any) => {
           console.error('Video error:', err);
           setError('Video playback error');
           setIsLoading(false);
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
         };
 
-        video.addEventListener('loadedmetadata', handleLoadedMetadata);
+        // Use canplay event instead of loadedmetadata for better compatibility
+        video.addEventListener('canplay', handleCanPlay, { once: true });
         video.addEventListener('error', handleError);
         
-        // Cleanup listeners
+        // Cleanup function
         return () => {
-          video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+          video.removeEventListener('canplay', handleCanPlay);
           video.removeEventListener('error', handleError);
         };
       }
@@ -123,9 +158,13 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       setIsLoading(false);
       setIsReady(false);
       
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError') {
-          setError('Camera access denied. Please allow camera permissions.');
+          setError('Camera access denied. Please allow camera permissions and refresh.');
         } else if (err.name === 'NotFoundError') {
           setError('No camera found. Please connect a camera.');
         } else if (err.name === 'NotSupportedError') {
@@ -148,6 +187,9 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
     }
     setIsReady(false);
     setIsLoading(false);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
   };
 
   const toggleCamera = () => {
@@ -192,6 +234,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
         <div className="text-center text-gray-400">
           <div className="w-8 h-8 mx-auto mb-2 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-sm">Loading camera...</p>
+          <p className="text-xs mt-1 opacity-75">This should only take a few seconds</p>
         </div>
       </div>
     );
