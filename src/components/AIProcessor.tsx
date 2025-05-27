@@ -13,7 +13,8 @@ class AIProcessor {
       'see', 'look', 'what', 'how', 'describe', 'color', 'wearing', 'holding',
       'picture', 'image', 'show', 'visible', 'appearance', 'behind', 'front',
       'left', 'right', 'above', 'below', 'around', 'gesture', 'posture',
-      'expression', 'face', 'hand', 'object', 'room', 'background', 'doing'
+      'expression', 'face', 'hand', 'object', 'room', 'background', 'doing',
+      'reading', 'watching', 'identify', 'recognize', 'analyze', 'observe'
     ];
     
     const lowerText = text.toLowerCase();
@@ -22,21 +23,29 @@ class AIProcessor {
 
   async processMessage(userMessage: string, imageData?: string | null): Promise<string> {
     try {
+      console.log('Processing message:', userMessage);
+      console.log('Image data available:', !!imageData);
+      console.log('Needs vision:', this.needsVision(userMessage));
+      
       const useVision = this.needsVision(userMessage) && imageData;
       
       if (useVision && imageData) {
+        console.log('Using vision API');
         return await this.processWithVision(userMessage, imageData);
       } else {
+        console.log('Using text-only API');
         return await this.processTextOnly(userMessage);
       }
     } catch (error) {
       console.error('AI processing error:', error);
-      return "I apologize, but I'm having trouble processing your request right now. Please try again.";
+      return "I apologize, but I'm having trouble processing your request right now. Please try again in a moment.";
     }
   }
 
   private async processTextOnly(text: string): Promise<string> {
     const url = `${this.baseUrl}/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
+    
+    console.log('Making text-only API request to:', url);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -58,11 +67,17 @@ class AIProcessor {
       })
     });
 
+    console.log('Text-only API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`API request failed: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('Text-only API response data:', data);
+    
     const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't generate a response.";
     
     // Speak the response
@@ -73,6 +88,8 @@ class AIProcessor {
 
   private async processWithVision(text: string, imageData: string): Promise<string> {
     const url = `${this.baseUrl}/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
+    
+    console.log('Making vision API request to:', url);
     
     // Convert base64 image to the format Gemini expects
     const base64Data = imageData.split(',')[1];
@@ -105,11 +122,17 @@ class AIProcessor {
       })
     });
 
+    console.log('Vision API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Vision API Error Response:', errorText);
+      throw new Error(`Vision API request failed: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('Vision API response data:', data);
+    
     const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't analyze the image.";
     
     // Speak the response
@@ -142,12 +165,17 @@ class AIProcessor {
       }
 
       utterance.onstart = () => {
-        // Trigger speaking state in parent component
+        console.log('Speech synthesis started');
         window.dispatchEvent(new CustomEvent('ai-speaking-start'));
       };
 
       utterance.onend = () => {
-        // Trigger speaking end in parent component
+        console.log('Speech synthesis ended');
+        window.dispatchEvent(new CustomEvent('ai-speaking-end'));
+      };
+
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event);
         window.dispatchEvent(new CustomEvent('ai-speaking-end'));
       };
 

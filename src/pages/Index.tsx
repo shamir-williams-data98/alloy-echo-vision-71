@@ -56,17 +56,25 @@ const Index = () => {
   }, []);
 
   const handleUserMessage = useCallback(async (userText: string) => {
+    console.log('User message received:', userText);
     addMessage(userText, 'user');
     
-    // Capture image if camera is enabled
+    // Initialize AI processor
+    const aiProcessor = new AIProcessor();
+    
+    // Only capture image if camera is enabled AND the user's message suggests they want vision
     let imageData = null;
-    if (cameraEnabled && webcamRef.current) {
+    const needsVision = /\b(see|look|what|how|describe|color|wearing|holding|picture|image|show|visible|appearance|behind|front|left|right|above|below|around|gesture|posture|expression|face|hand|object|room|background|doing|reading|watching|identify|recognize|analyze|observe)\b/i.test(userText);
+    
+    if (cameraEnabled && needsVision && webcamRef.current) {
+      console.log('Capturing image for vision request');
       imageData = webcamRef.current.captureImage();
       setCurrentImage(imageData);
+    } else {
+      console.log('Skipping image capture - not needed for this request');
     }
 
     // Process with AI
-    const aiProcessor = new AIProcessor();
     const response = await aiProcessor.processMessage(userText, imageData);
     
     addMessage(response, 'assistant', !!imageData);
@@ -83,13 +91,13 @@ const Index = () => {
 
       <div className="relative z-10 h-screen flex flex-col overflow-hidden">
         {/* Header - Fixed height with proper spacing */}
-        <div className="text-center py-2 md:py-4 px-2 md:px-4 flex-shrink-0">
-          <div className="max-w-full overflow-hidden">
-            <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-1 leading-tight">
+        <div className="text-center py-3 md:py-4 px-3 md:px-4 flex-shrink-0">
+          <div className="max-w-full">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-2 leading-tight">
               NEXUS
             </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-cyan-300 mb-1 leading-tight">
-              by <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-extrabold">SHAM</span>
+            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-cyan-300 mb-1 leading-tight">
+              by <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-extrabold">SHAM</span>
             </p>
             <p className="text-xs md:text-sm text-gray-300 leading-tight">
               Advanced AI Assistant with Voice & Vision Capabilities
@@ -98,20 +106,20 @@ const Index = () => {
         </div>
 
         {/* Main content area - Flexible with proper spacing */}
-        <div className="flex-1 flex flex-col lg:grid lg:grid-cols-3 gap-2 md:gap-4 px-2 md:px-4 pb-2 md:pb-4 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col lg:grid lg:grid-cols-3 gap-3 md:gap-4 px-3 md:px-4 pb-3 md:pb-4 min-h-0 overflow-hidden">
           {/* Webcam Panel */}
-          <div className="lg:col-span-1 order-2 lg:order-1 h-40 sm:h-48 md:h-64 lg:h-auto">
+          <div className="lg:col-span-1 order-2 lg:order-1 h-48 sm:h-56 md:h-64 lg:h-auto">
             <Card className="h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm overflow-hidden">
-              <div className="p-2 md:p-3 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-2 flex-shrink-0">
+              <div className="p-3 md:p-4 h-full flex flex-col">
+                <div className="flex items-center justify-between mb-3 flex-shrink-0">
                   <h3 className="text-sm md:text-lg font-semibold text-cyan-400">Vision Input</h3>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCameraEnabled(!cameraEnabled)}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700 text-xs md:text-sm p-1 md:p-2"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 text-xs md:text-sm"
                   >
-                    {cameraEnabled ? <Camera className="w-3 h-3 md:w-4 md:h-4" /> : <CameraOff className="w-3 h-3 md:w-4 md:h-4" />}
+                    {cameraEnabled ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
                   </Button>
                 </div>
                 <div className="flex-1 min-h-0">
@@ -128,7 +136,7 @@ const Index = () => {
           {/* Chat Panel */}
           <div className="lg:col-span-2 order-1 lg:order-2 flex-1 flex flex-col min-h-0">
             <Card className="h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm flex flex-col min-h-0 overflow-hidden">
-              <div className="p-2 md:p-3 border-b border-gray-700 flex-shrink-0">
+              <div className="p-3 md:p-4 border-b border-gray-700 flex-shrink-0">
                 <h3 className="text-sm md:text-lg font-semibold text-cyan-400">Conversation</h3>
               </div>
               
@@ -136,7 +144,7 @@ const Index = () => {
                 <ChatDisplay messages={messages} />
               </div>
 
-              <div className="p-2 md:p-3 border-t border-gray-700 flex-shrink-0">
+              <div className="p-3 md:p-4 border-t border-gray-700 flex-shrink-0">
                 <VoiceControls
                   isListening={isListening}
                   isSpeaking={isSpeaking}

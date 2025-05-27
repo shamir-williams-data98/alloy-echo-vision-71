@@ -15,10 +15,14 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const [error, setError] = useState<string>('');
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isLoading, setIsLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useImperativeHandle(ref, () => ({
     captureImage: () => {
-      if (!videoRef.current || !canvasRef.current) return null;
+      if (!videoRef.current || !canvasRef.current || !isReady) {
+        console.log('Video not ready for capture');
+        return null;
+      }
       
       const canvas = canvasRef.current;
       const video = videoRef.current;
@@ -31,6 +35,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       context.drawImage(video, 0, 0);
       
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
+      console.log('Image captured successfully');
       onImageCapture?.(imageData);
       return imageData;
     }
@@ -50,18 +55,21 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
     try {
       setError('');
       setIsLoading(true);
+      setIsReady(false);
       
-      // Stop existing stream before starting new one
+      // Stop existing stream
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
+        setStream(null);
       }
 
-      // Check if getUserMedia is available
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // Check browser support
+      if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('Camera not supported by this browser');
       }
 
-      // Request camera permissions
+      console.log('Starting camera with facing mode:', facingMode);
+      
       const constraints = {
         video: { 
           width: { ideal: 640, max: 1280 },
@@ -71,36 +79,62 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
         audio: false
       };
 
-      console.log('Requesting camera with constraints:', constraints);
-      
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('Camera stream obtained successfully');
       
-      console.log('Camera stream obtained:', mediaStream);
       setStream(mediaStream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded');
+        
+        // Wait for video to be ready
+        const video = videoRef.current;
+        
+        const handleLoadedMetadata = () => {
+          console.log('Video metadata loaded, starting playback');
+          video.play().then(() => {
+            console.log('Video playing successfully');
+            setIsLoading(false);
+            setIsReady(true);
+          }).catch(err => {
+            console.error('Error playing video:', err);
+            setError('Failed to start video playback');
+            setIsLoading(false);
+          });
+        };
+
+        const handleError = (err: any) => {
+          console.error('Video error:', err);
+          setError('Video playback error');
           setIsLoading(false);
+        };
+
+        video.addEventListener('loadedmetadata', handleLoadedMetadata);
+        video.addEventListener('error', handleError);
+        
+        // Cleanup listeners
+        return () => {
+          video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+          video.removeEventListener('error', handleError);
         };
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
+      console.error('Camera error:', err);
       setIsLoading(false);
+      setIsReady(false);
       
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError') {
-          setError('Camera access denied. Please allow camera permissions and refresh.');
+          setError('Camera access denied. Please allow camera permissions.');
         } else if (err.name === 'NotFoundError') {
-          setError('No camera found. Please connect a camera and try again.');
+          setError('No camera found. Please connect a camera.');
         } else if (err.name === 'NotSupportedError') {
           setError('Camera not supported by this browser.');
         } else {
           setError(`Camera error: ${err.message}`);
         }
       } else {
-        setError('Unable to access camera. Please check permissions.');
+        setError('Unable to access camera');
       }
     }
   };
@@ -108,15 +142,15 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const stopCamera = () => {
     if (stream) {
       stream.getTracks().forEach(track => {
-        console.log('Stopping camera track:', track);
         track.stop();
       });
       setStream(null);
     }
+    setIsReady(false);
+    setIsLoading(false);
   };
 
   const toggleCamera = () => {
-    console.log('Toggling camera from', facingMode, 'to', facingMode === 'user' ? 'environment' : 'user');
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
@@ -200,6 +234,13 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
           {facingMode === 'user' ? 'Front' : 'Back'} Camera
         </span>
       </div>
+
+      {/* Ready indicator */}
+      {isReady && (
+        <div className="absolute top-3 left-3 bg-green-500/20 border border-green-500 rounded px-2 py-1">
+          <span className="text-xs text-green-400">Ready</span>
+        </div>
+      )}
     </div>
   );
 });
