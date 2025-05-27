@@ -16,6 +16,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [videoReady, setVideoReady] = useState(false);
   
   const { stream, error, isLoading, isReady, startCamera } = useCamera({
     enabled,
@@ -24,7 +25,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
 
   useImperativeHandle(ref, () => ({
     captureImage: () => {
-      if (!videoRef.current || !canvasRef.current || !isReady) {
+      if (!videoRef.current || !canvasRef.current || !isReady || !videoReady) {
         console.log('Video not ready for capture');
         return null;
       }
@@ -50,34 +51,52 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
     if (stream && videoRef.current) {
       const video = videoRef.current;
       video.srcObject = stream;
+      setVideoReady(false);
       
+      const handleLoadedMetadata = () => {
+        console.log('Video metadata loaded');
+      };
+
       const handleCanPlay = () => {
         console.log('Video can play, attempting to start');
         video.play()
           .then(() => {
             console.log('Video playing successfully');
+            setVideoReady(true);
           })
           .catch(err => {
             console.error('Error playing video:', err);
           });
       };
 
-      const handleError = (err: any) => {
-        console.error('Video error:', err);
+      const handlePlaying = () => {
+        console.log('Video is now playing');
+        setVideoReady(true);
       };
 
-      video.addEventListener('canplay', handleCanPlay, { once: true });
+      const handleError = (err: any) => {
+        console.error('Video error:', err);
+        setVideoReady(false);
+      };
+
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      video.addEventListener('canplay', handleCanPlay);
+      video.addEventListener('playing', handlePlaying);
       video.addEventListener('error', handleError);
       
       return () => {
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
         video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('playing', handlePlaying);
         video.removeEventListener('error', handleError);
+        setVideoReady(false);
       };
     }
   }, [stream]);
 
   const toggleCamera = () => {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    setVideoReady(false);
   };
 
   if (!enabled) {
@@ -88,7 +107,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
     return <CameraError error={error} onRetry={startCamera} />;
   }
 
-  if (isLoading) {
+  if (isLoading || !videoReady) {
     return <CameraLoading />;
   }
 
@@ -110,7 +129,7 @@ const WebcamCapture = forwardRef<any, WebcamCaptureProps>(({ enabled, onImageCap
       
       <CameraOverlay 
         facingMode={facingMode}
-        isReady={isReady}
+        isReady={isReady && videoReady}
       />
     </div>
   );
