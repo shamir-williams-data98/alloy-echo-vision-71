@@ -73,7 +73,7 @@ export const useCamera = ({ enabled, facingMode }: UseCameraProps) => {
         console.log('Camera loading timeout');
         setIsLoading(false);
         setError('Camera is taking too long to load. Please try again or check your camera settings.');
-      }, 8000);
+      }, 15000);
       
       // Stop existing stream
       if (stream) {
