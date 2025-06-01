@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Mic, MicOff, Camera, CameraOff, Volume2, VolumeX } from 'lucide-react';
@@ -14,15 +15,22 @@ interface Message {
   type: 'user' | 'assistant';
   timestamp: number;
   hasImage?: boolean;
+  translationKey?: string;
+  isTranslatable?: boolean;
+  spokenCharIndex?: number;
 }
 
 const Index = () => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! I\'m NEXUS AI by Sham, your advanced assistant. I can see through your camera and respond with voice. Ask me anything!',
+      text: t('greeting'), // Keep for desktop or as fallback
       type: 'assistant',
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      translationKey: 'greeting', // Add translation key
+      isTranslatable: true,      // Mark as translatable
+      spokenCharIndex: 0 // Initialize spokenCharIndex
     }
   ]);
   const [isListening, setIsListening] = useState(false);
@@ -44,13 +52,38 @@ const Index = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleSpeechBoundary = (event: Event) => {
+      const customEvent = event as CustomEvent<{ charIndex: number; text: string }>;
+      const { charIndex, text: utteranceText } = customEvent.detail;
+
+      setMessages(prevMessages =>
+        prevMessages.map(msg => {
+          // Identify the message that matches the utterance text.
+          if (msg.type === 'assistant' && msg.text === utteranceText) {
+            return { ...msg, spokenCharIndex: charIndex };
+          }
+          return msg;
+        })
+      );
+    };
+
+    window.addEventListener('ai-speech-boundary', handleSpeechBoundary);
+
+    return () => {
+      window.removeEventListener('ai-speech-boundary', handleSpeechBoundary);
+    };
+  }, [setMessages]); // setMessages should be stable, but good to include
+
   const addMessage = useCallback((text: string, type: 'user' | 'assistant', hasImage?: boolean) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text,
       type,
       timestamp: Date.now(),
-      hasImage
+      hasImage,
+      spokenCharIndex: type === 'assistant' ? 0 : undefined, // Initialize for assistant messages
+      // If it's the initial greeting, isTranslatable and translationKey are set separately
     };
     setMessages(prev => [...prev, newMessage]);
   }, []);
@@ -94,13 +127,16 @@ const Index = () => {
         <div className="text-center py-3 md:py-4 px-3 md:px-4 flex-shrink-0">
           <div className="max-w-full">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-2 leading-tight">
-              NEXUS
+              {t('header_title')}
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-cyan-300 mb-1 leading-tight">
-              by <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-extrabold">SHAM</span>
+              {t('header_subtitle_by')}{' '}
+              <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-extrabold">
+                {t('header_subtitle_name')}
+              </span>
             </p>
             <p className="text-xs md:text-sm text-gray-300 leading-tight">
-              Advanced AI Assistant with Voice & Vision Capabilities
+              {t('header_description')}
             </p>
           </div>
         </div>
@@ -112,7 +148,7 @@ const Index = () => {
             <Card className="h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm overflow-hidden">
               <div className="p-3 md:p-4 h-full flex flex-col">
                 <div className="flex items-center justify-between mb-3 flex-shrink-0">
-                  <h3 className="text-sm md:text-lg font-semibold text-cyan-400">Vision Input</h3>
+                  <h3 className="text-sm md:text-lg font-semibold text-cyan-400">{t('vision_input_title')}</h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -137,7 +173,7 @@ const Index = () => {
           <div className="lg:col-span-2 order-1 lg:order-2 flex-1 flex flex-col min-h-0">
             <Card className="h-full bg-gray-900/50 border-gray-700 backdrop-blur-sm flex flex-col min-h-0 overflow-hidden">
               <div className="p-3 md:p-4 border-b border-gray-700 flex-shrink-0">
-                <h3 className="text-sm md:text-lg font-semibold text-cyan-400">Conversation</h3>
+                <h3 className="text-sm md:text-lg font-semibold text-cyan-400">{t('conversation_title')}</h3>
               </div>
               
               <div className="flex-1 overflow-hidden min-h-0">

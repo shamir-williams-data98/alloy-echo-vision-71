@@ -169,6 +169,16 @@ class AIProcessor {
         window.dispatchEvent(new CustomEvent('ai-speaking-start'));
       };
 
+      utterance.onboundary = (event: SpeechSynthesisEvent) => {
+        console.log('Speech boundary:', event.charIndex, event.name); // event.name is usually empty string
+        window.dispatchEvent(new CustomEvent('ai-speech-boundary', {
+          detail: {
+            charIndex: event.charIndex,
+            text: utterance.text // The full text of the utterance this event belongs to
+          }
+        }));
+      };
+
       utterance.onend = () => {
         console.log('Speech synthesis ended');
         window.dispatchEvent(new CustomEvent('ai-speaking-end'));
