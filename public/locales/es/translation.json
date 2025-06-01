@@ -1,0 +1,10 @@
+{
+  "greeting": "¡Hola! Soy NEXUS AI por Sham, tu asistente avanzado. Puedo ver a través de tu cámara y responder con voz. ¡Pregúntame lo que sea!",
+  "header_title": "NEXUS",
+  "header_subtitle_by": "por",
+  "header_subtitle_name": "SHAM",
+  "header_description": "Asistente Avanzado de IA con Capacidades de Voz y Visión",
+  "vision_input_title": "Entrada de Visión",
+  "conversation_title": "Conversación",
+  "vision_used_indicator": "📷 Visión utilizada"
+}
