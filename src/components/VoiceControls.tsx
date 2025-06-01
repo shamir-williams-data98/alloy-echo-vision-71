@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mic, MicOff, Send, Square } from 'lucide-react';
@@ -19,6 +20,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
   onListeningChange,
   onSpeakingChange
 }) => {
+  const { t } = useTranslation();
   const [textInput, setTextInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [speechError, setSpeechError] = useState<string>('');
@@ -62,28 +64,28 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
         setIsRecording(false);
         onListeningChange(false);
         
-        let errorMessage = 'Speech recognition error';
+        let errorMessage = t('voiceControls.error.generic');
         switch (event.error) {
           case 'not-allowed':
-            errorMessage = 'Microphone access denied. Please allow microphone permissions.';
+            errorMessage = t('voiceControls.error.micDenied');
             break;
           case 'no-speech':
-            errorMessage = 'No speech detected. Please try again.';
+            errorMessage = t('voiceControls.error.noSpeech');
             break;
           case 'network':
-            errorMessage = 'Network error. Check your connection.';
+            errorMessage = t('voiceControls.error.network');
             break;
           case 'service-not-allowed':
-            errorMessage = 'Speech service not allowed.';
+            errorMessage = t('voiceControls.error.serviceNotAllowed');
             break;
           default:
-            errorMessage = `Speech error: ${event.error}`;
+            errorMessage = t('voiceControls.error.default', { error: event.error });
         }
         setSpeechError(errorMessage);
       };
     } else {
       console.log('Speech recognition not supported');
-      setSpeechError('Speech recognition not supported in this browser');
+      setSpeechError(t('voiceControls.info.micNotSupported')); // Corrected: use info key
     }
 
     return () => {
@@ -95,7 +97,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
 
   const startListening = useCallback(async () => {
     if (!recognitionRef.current) {
-      setSpeechError('Speech recognition not available');
+      setSpeechError(t('voiceControls.error.recognitionNotAvailable'));
       return;
     }
 
@@ -113,7 +115,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           console.log('Microphone permission granted');
         } catch (err) {
           console.error('Microphone permission denied:', err);
-          setSpeechError('Microphone access denied. Please allow microphone permissions.');
+          setSpeechError(t('voiceControls.error.micDenied'));
           return;
         }
       }
@@ -124,9 +126,9 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
       }
     } catch (error) {
       console.error('Error starting speech recognition:', error);
-      setSpeechError('Failed to start speech recognition');
+      setSpeechError(t('voiceControls.error.failedToStart'));
     }
-  }, [isRecording, onSpeakingChange]);
+  }, [isRecording, onSpeakingChange, t]); // Added t to dependency array
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isRecording) {
@@ -174,18 +176,18 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
             {isRecording ? (
               <>
                 <MicOff className="w-3 h-3 md:w-4 md:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Stop</span>
+                <span className="hidden sm:inline">{t('voiceControls.stopButton')}</span>
                 <div className="absolute inset-0 bg-red-400/20 animate-pulse"></div>
               </>
             ) : (
               <>
                 <Mic className="w-3 h-3 md:w-4 md:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Speak</span>
+                <span className="hidden sm:inline">{t('voiceControls.speakButton')}</span>
               </>
             )}
           </Button>
         ) : (
-          <div className="text-xs text-gray-400">Mic not supported</div>
+          <div className="text-xs text-gray-400">{t('voiceControls.info.micNotSupported')}</div>
         )}
 
         {isSpeaking && (
@@ -196,7 +198,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
             className="border-gray-600 text-gray-300 hover:bg-gray-700 text-xs px-2 py-1 md:px-3 md:py-2"
           >
             <Square className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-            <span className="hidden sm:inline">Stop</span>
+            <span className="hidden sm:inline">{t('voiceControls.stopButton')}</span>
           </Button>
         )}
       </div>
@@ -214,7 +216,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
+          placeholder={t('voiceControls.typeMessagePlaceholder')}
           className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-500 text-xs md:text-sm h-8 md:h-10"
         />
         <Button
