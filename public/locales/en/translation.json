@@ -6,5 +6,18 @@
   "header_description": "Advanced AI Assistant with Voice & Vision Capabilities",
   "vision_input_title": "Vision Input",
   "conversation_title": "Conversation",
-  "vision_used_indicator": "📷 Vision used"
+  "vision_used_indicator": "📷 Vision used",
+
+  "voiceControls.stopButton": "Stop",
+  "voiceControls.speakButton": "Speak",
+  "voiceControls.typeMessagePlaceholder": "Type your message...",
+  "voiceControls.info.micNotSupported": "Mic not supported",
+  "voiceControls.error.generic": "Speech recognition error",
+  "voiceControls.error.micDenied": "Microphone access denied. Please allow microphone permissions.",
+  "voiceControls.error.noSpeech": "No speech detected. Please try again.",
+  "voiceControls.error.network": "Network error. Check your connection.",
+  "voiceControls.error.serviceNotAllowed": "Speech service not allowed.",
+  "voiceControls.error.default": "Speech error: {{error}}",
+  "voiceControls.error.recognitionNotAvailable": "Speech recognition not available",
+  "voiceControls.error.failedToStart": "Failed to start speech recognition"
 }

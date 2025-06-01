@@ -6,5 +6,18 @@
   "header_description": "Asistente Avanzado de IA con Capacidades de Voz y Visión",
   "vision_input_title": "Entrada de Visión",
   "conversation_title": "Conversación",
-  "vision_used_indicator": "📷 Visión utilizada"
+  "vision_used_indicator": "📷 Visión utilizada",
+
+  "voiceControls.stopButton": "Detener",
+  "voiceControls.speakButton": "Hablar",
+  "voiceControls.typeMessagePlaceholder": "Escribe tu mensaje...",
+  "voiceControls.info.micNotSupported": "Micrófono no compatible",
+  "voiceControls.error.generic": "Error de reconocimiento de voz",
+  "voiceControls.error.micDenied": "Acceso al micrófono denegado. Por favor, permite los permisos del micrófono.",
+  "voiceControls.error.noSpeech": "No se detectó voz. Por favor, inténtalo de nuevo.",
+  "voiceControls.error.network": "Error de red. Verifica tu conexión.",
+  "voiceControls.error.serviceNotAllowed": "Servicio de voz no permitido.",
+  "voiceControls.error.default": "Error de voz: {{error}}",
+  "voiceControls.error.recognitionNotAvailable": "Reconocimiento de voz no disponible",
+  "voiceControls.error.failedToStart": "No se pudo iniciar el reconocimiento de voz"
 }
