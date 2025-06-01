@@ -63,14 +63,33 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({ messages }) => {
                 <div className="flex-1">
                   {message.type === 'assistant' ? (
                     isMobile && message.isTranslatable && message.translationKey ? (
-                      <>
-                        <div className="text-sm leading-relaxed font-semibold">
-                          EN: <HighlightedText text={i18n.t(message.translationKey, { lng: 'en' })} spokenCharIndex={message.spokenCharIndex || 0} />
-                        </div>
-                        <div className="text-sm leading-relaxed mt-1">
-                          ES: {i18n.t(message.translationKey, { lng: 'es' })} {/* Spanish shown plain */}
-                        </div>
-                      </>
+                      (() => {
+                        // message.text is assumed to be already in the current i18n.language
+                        // message.spokenCharIndex refers to message.text
+                        const currentTextLang = i18n.language.startsWith('es') ? 'es' : 'en';
+
+                        const englishText = i18n.t(message.translationKey!, { lng: 'en' });
+                        const spanishText = i18n.t(message.translationKey!, { lng: 'es' });
+
+                        return (
+                          <>
+                            <div className="text-sm leading-relaxed font-semibold">
+                              EN: {currentTextLang === 'en' ? (
+                                <HighlightedText text={englishText} spokenCharIndex={message.spokenCharIndex || 0} />
+                              ) : (
+                                englishText // English plain if Spanish is spoken/primary
+                              )}
+                            </div>
+                            <div className="text-sm leading-relaxed mt-1">
+                              ES: {currentTextLang === 'es' ? (
+                                <HighlightedText text={spanishText} spokenCharIndex={message.spokenCharIndex || 0} />
+                              ) : (
+                                spanishText // Spanish plain if English is spoken/primary
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()
                     ) : (
                       <div className="text-sm leading-relaxed">
                         <HighlightedText text={message.text} spokenCharIndex={message.spokenCharIndex || 0} />
