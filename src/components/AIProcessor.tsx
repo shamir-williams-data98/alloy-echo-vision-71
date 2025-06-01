@@ -165,30 +165,38 @@ class AIProcessor {
       }
 
       utterance.onstart = () => {
-        console.log('Speech synthesis started');
+        // console.log('Speech synthesis started'); // Original log, can be kept or removed based on general preference
         window.dispatchEvent(new CustomEvent('ai-speaking-start'));
       };
 
       utterance.onboundary = (event: SpeechSynthesisEvent) => {
-        console.log('Speech boundary:', event.charIndex, event.name); // event.name is usually empty string
+        // console.log(`[AIProcessor] onboundary: charIndex=${event.charIndex}, text="${utterance.text.substring(0, 50)}..."`);
         window.dispatchEvent(new CustomEvent('ai-speech-boundary', {
           detail: {
             charIndex: event.charIndex,
-            text: utterance.text // The full text of the utterance this event belongs to
+            text: utterance.text
           }
         }));
       };
 
       utterance.onend = () => {
-        console.log('Speech synthesis ended');
+        // console.log(`[AIProcessor] onend: Speech synthesis ended for text="${utterance.text.substring(0, 50)}..."`);
         window.dispatchEvent(new CustomEvent('ai-speaking-end'));
+        // Also ensure spokenCharIndex is set to full length on end
+        window.dispatchEvent(new CustomEvent('ai-speech-boundary', {
+          detail: {
+            charIndex: utterance.text.length, // Final charIndex
+            text: utterance.text
+          }
+        }));
       };
 
       utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
+        console.error('Speech synthesis error:', event); // Keeping this error log
         window.dispatchEvent(new CustomEvent('ai-speaking-end'));
       };
 
+      // console.log(`[AIProcessor] speakText: Attempting to speak. Language: ${utterance.lang || 'default'}, Text: "${text.substring(0, 50)}..."`);
       speechSynthesis.speak(utterance);
     }
   }

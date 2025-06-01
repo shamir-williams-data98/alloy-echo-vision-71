@@ -56,16 +56,23 @@ const Index = () => {
     const handleSpeechBoundary = (event: Event) => {
       const customEvent = event as CustomEvent<{ charIndex: number; text: string }>;
       const { charIndex, text: utteranceText } = customEvent.detail;
+      // console.log(`[Index.tsx] handleSpeechBoundary: charIndex=${charIndex}, utteranceText="${utteranceText.substring(0, 50)}..."`);
 
-      setMessages(prevMessages =>
-        prevMessages.map(msg => {
-          // Identify the message that matches the utterance text.
+      setMessages(prevMessages => {
+        let matched = false;
+        const updatedMessages = prevMessages.map(msg => {
           if (msg.type === 'assistant' && msg.text === utteranceText) {
+            // console.log(`[Index.tsx] Matched message ID ${msg.id}. Updating spokenCharIndex to ${charIndex}. Old: ${msg.spokenCharIndex}`);
+            matched = true;
             return { ...msg, spokenCharIndex: charIndex };
           }
           return msg;
-        })
-      );
+        });
+        if (!matched) {
+          // console.warn(`[Index.tsx] No message matched utteranceText: "${utteranceText.substring(0, 50)}..."`);
+        }
+        return updatedMessages;
+      });
     };
 
     window.addEventListener('ai-speech-boundary', handleSpeechBoundary);
